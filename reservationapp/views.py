@@ -56,11 +56,25 @@ class ReservationViewSet(viewsets.ModelViewSet):
     except Reservation.DoesNotExist:
       return Response({'detail': 'Reservation does not exist'}, status=status.HTTP_404_NOT_FOUND)
     
-  def list(self, request):
+  def list(self, request, pk=None):
     if request.user.is_staff:
       reservations = Reservation.objects.all().order_by('-date', '-hour')
     else:
       reservations = Reservation.objects.filter(user=request.user).values().order_by('-date', '-hour')
+      if pk != None:
+        reservations = reservations.filter(id=pk).values()
+        serializer = ReservationSerializer(reservations, many=False)
+        return Response(serializer.data)
     serializer = ReservationSerializer(reservations, many=True)
     return Response(serializer.data)
+  
+  def retrieve(self, request, pk=None):
+    try:
+      reservation = Reservation.objects.get(pk=pk)
+      if request.user.is_staff:
+        return Response(reservation)
+      else:
+        return Response({'detail': 'Acceso denegado'}, status=status.HTTP_401_UNAUTHORIZED)
+    except Reservation.DoesNotExist:
+      return Response({'detail': 'Reservation does not exist'}, status=status.HTTP_404_NOT_FOUND)
   

@@ -47,9 +47,11 @@ class ReservationViewSet(viewsets.ModelViewSet):
           reservation.hour = serializer.validated_data['hour']
           if request.user.is_staff:
             if serializer.validated_data['user'] == "":
-              serializer.validated_data['user'] = request.user
+              reservation.user = request.user
+            else:
+              reservation.user = serializer.validated_data['user']
           else:
-            serializer.validated_data['user'] = request.user
+            reservation.user = request.user
           reservation.save()
           return Response(serializer.data)      
       return Response(serializer.errors)

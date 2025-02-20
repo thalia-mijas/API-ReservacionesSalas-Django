@@ -42,9 +42,9 @@ class ReservationViewSet(viewsets.ModelViewSet):
         if (serializer.validated_data['date'] < datetime.date.today()) or (serializer.validated_data['date'] == datetime.date.today() and int(serializer.validated_data['hour']) <= datetime.datetime.now().hour):
           return Response({'detail': 'Date or time no longer available'}, status=status.HTTP_400_BAD_REQUEST)
         else:
-          reservation.room = serializer.data['room']
-          reservation.date = serializer.data['date']
-          reservation.hour = serializer.data['hour']
+          reservation.room = serializer.validated_data['room']
+          reservation.date = serializer.validated_data['date']
+          reservation.hour = serializer.validated_data['hour']
           if request.user.is_staff:
             if serializer.validated_data['user'] == "":
               serializer.validated_data['user'] = request.user
@@ -72,7 +72,8 @@ class ReservationViewSet(viewsets.ModelViewSet):
     try:
       reservation = Reservation.objects.get(pk=pk)
       if request.user.is_staff:
-        return Response(reservation)
+        serializer = ReservationSerializer(reservation, many=False)
+        return Response(serializer.data)
       else:
         return Response({'detail': 'Acceso denegado'}, status=status.HTTP_401_UNAUTHORIZED)
     except Reservation.DoesNotExist:

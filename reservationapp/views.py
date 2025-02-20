@@ -50,7 +50,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
               serializer.validated_data['user'] = request.user
           else:
             serializer.validated_data['user'] = request.user
-          serializer.save()
+          reservation.save()
           return Response(serializer.data)      
       return Response(serializer.errors)
     except Reservation.DoesNotExist:

@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0.41-bookworm
+    container_name: mysql-reservas
+    restart: unless-stopped
+    volumes:
+      - ./MySQL:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: ${MYSQL_RANDOM_ROOT_PASSWORD}
+    networks:
+      - reservaciones
+    ports:
+      - "3307:3306"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reservationapi
+    depends_on:
+      - db
+    ports:
+      - "80:80"
+    env_file:
+      - .env
+    networks:
+      - reservaciones
+    volumes:
+      - .:/code
+    command: >
+      bash -c "/wait-for-it.sh db:3306 -- 
+        python manage.py migrate &&
+        python manage.py loaddata data.json &&
+        python manage.py collectstatic &&
+        service nginx start &&
+        gunicorn reservationsapi.wsgi:application"
+
+networks:
+  reservaciones:
+    driver: bridge
